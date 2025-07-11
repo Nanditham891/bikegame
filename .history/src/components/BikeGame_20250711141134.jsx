@@ -100,51 +100,6 @@ export default function BikeGame() {
     };
   }, []);
 
-
-  const triggerJump = () => {
-  setJumps((prev) => prev + 1);
-  setIsJumping(true);
-  playSound("jump");
-
-  const jumpDuration =
-    window.innerWidth < 480
-      ? 500
-      : window.innerWidth < 768
-      ? 600
-      : window.innerWidth < 1024
-      ? 650
-      : 700;
-
-   if (jumpTimeoutRef.current) clearTimeout(jumpTimeoutRef.current);
-  jumpTimeoutRef.current = setTimeout(() => setIsJumping(false), jumpDuration);
-
-};
-
-useEffect(() => {
-  const handleKeyUp = (e) => {
-    if (e.code === "Space" && !isJumping && !gameOver) {
-      triggerJump();
-    }
-  };
-
-  const handleTouch = () => {
-    if (!isJumping && !gameOver) {
-      triggerJump();
-    }
-  };
-
-  window.addEventListener("keyup", handleKeyUp);
-  window.addEventListener("touchstart", handleTouch);
-  window.addEventListener("click", handleTouch);
-
-  return () => {
-    window.removeEventListener("keyup", handleKeyUp);
-    window.removeEventListener("touchstart", handleTouch);
-    window.removeEventListener("click", handleTouch);
-  };
-}, [isJumping, gameOver]);
-
-
   const [distance, setDistance] = useState(0);
   const [jumps, setJumps] = useState(0);
   const [maxHeight, setMaxHeight] = useState(0);
@@ -208,12 +163,11 @@ useEffect(() => {
       });
     }, 30);
     return () => clearInterval(interval);
-    
   }, [gameOver]);
 
   useEffect(() => {
-    const handleKeyUp = (e) => {
-      if (e.code === "Space" && !isJumping && !gameOver) {
+    const handleJump = () => {
+      if (!isJumping && !gameOver) {
         setJumps((prev) => prev + 1);
         setIsJumping(true);
         playSound("jump");
@@ -221,9 +175,27 @@ useEffect(() => {
       }
     };
 
-    window.addEventListener("keyup", handleKeyUp);
+    // Mobile-first touch controls
+    const gameContainer = document.querySelector('.game-container');
+    
+    const handleSpace = (e) => {
+      if (e.code === 'Space') handleJump();
+    };
+    
+    const handleTap = (e) => {
+      e.preventDefault();
+      handleJump();
+    };
+
+    // Attach events to game container for better mobile handling
+    window.addEventListener('keyup', handleSpace);
+    gameContainer?.addEventListener('touchstart', handleTap);
+    gameContainer?.addEventListener('click', handleTap);
+
     return () => {
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener('keyup', handleSpace);
+      gameContainer?.removeEventListener('touchstart', handleTap);
+      gameContainer?.removeEventListener('click', handleTap);
     };
   }, [isJumping, gameOver]);
 
@@ -345,28 +317,20 @@ useEffect(() => {
   };
 
   const resetGame = () => {
-  console.log("🔄 Resetting game...");
-
-  if (jumpTimeoutRef.current) {
-    clearTimeout(jumpTimeoutRef.current);
-    jumpTimeoutRef.current = null;
-  }
-
-  setIsJumping(false);
-  setGameOver(false);
-  setObstacleX(1000);
-  setDistance(0);
-  setJumps(0);
-  setMaxHeight(0);
-  setMinHeight(Infinity);
-  setBikeFrame(0);
-  setBirdFrame(0);
-  setObstacleType("cactus");
-  setObstacleImage(largeCactus1);
-
-  console.log("✅ Game reset complete!");
-};
-
+    console.log("🔄 Resetting game...");
+    setGameOver(false);
+    setObstacleX(1000);
+    setIsJumping(false);
+    setDistance(0);
+    setJumps(0);
+    setMaxHeight(0);
+    setMinHeight(Infinity);
+    setBikeFrame(0);
+    setBirdFrame(0);
+    setObstacleType("cactus");
+    setObstacleImage(largeCactus1);
+    console.log("✅ Game reset complete!");
+  };
 
   return (
     <div
@@ -431,8 +395,11 @@ useEffect(() => {
     .game-container {
       position: relative;
       width: 100%;
+      height: 50vh;
       max-width: 1000px;
-      height: 200px;
+      min-height: 200px;
+      max-height: 400px;
+      touch-action: none; /* Disable browser touch gestures */
       overflow: hidden;
       margin: 20px auto;
     }
@@ -502,7 +469,87 @@ useEffect(() => {
       max-width: 400px;
     }
 
-    @media (max-width: 768px) {
+    /* Mobile-first responsive design */
+    @media (max-width: 767px) {
+      .game-container {
+        height: 40vh;
+      }
+      
+      .bike {
+        width: 50px !important;
+        height: 50px !important;
+        left: 15% !important;
+      }
+      
+      .obstacle {
+        width: 40px !important;
+        height: 40px !important;
+        left: 85% !important;
+      }
+      
+      .scoreboard {
+        padding: 10px;
+        font-size: 14px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .game-container {
+        height: 50vh;
+      }
+      
+      .bike {
+        width: 70px !important;
+        height: 70px !important;
+      }
+      
+      .obstacle {
+        width: 60px !important;
+        height: 60px !important;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .game-container {
+        height: 60vh;
+      }
+      
+      .bike {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      
+      .obstacle {
+        width: 70px !important;
+        height: 70px !important;
+      }
+    }
+      .game-container {
+        height: 150px;
+      }
+      
+      .bike {
+        width: 40px;
+        height: 40px;
+        left: 5%;
+      }
+      
+      .obstacle {
+        width: 35px;
+        height: 35px;
+      }
+      
+      .scoreboard {
+        padding: 10px;
+        font-size: 12px;
+      }
+      
+      .reset-button {
+        width: 40px;
+      }
+    }
+    
+    @media (min-width: 481px) and (max-width: 768px) {
       .game-container {
         height: 180px;
       }
@@ -533,175 +580,74 @@ useEffect(() => {
       .scoreboard {
         font-size: 14px;
         padding: 15px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
-        @media (max-width: 1024px) {
-  .game-container {
-    height: 180px;
-  }
-
-  .bike {
-    width: 50px;
-    height: 50px;
-  }
-
-  .obstacle {
-    width: 50px;
-    height: 50px;
-  }
-
-  .cloud {
-    width: 70px;
-    height: 35px;
-  }
-
-  .game-over-img {
-    width: 180px;
-  }
-
-  .reset-button {
-    width: 55px;
-  }
-
-  .scoreboard {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 768px) {
-  .game-container {
-    height: 160px;
-  }
-
-  .bike {
-    width: 45px;
-    height: 45px;
-  }
-
-  .obstacle {
-    width: 45px;
-    height: 45px;
-  }
-
-  .cloud {
-    width: 60px;
-    height: 30px;
-  }
-
-  .game-over-img {
-    width: 160px;
-  }
-
-  .reset-button {
-    width: 50px;
-  }
-
-  .scoreboard {
-    font-size: 14px;
-    padding: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .game-container {
-    height: 140px;
-  }
-
-  .bike {
-    width: 40px;
-    height: 40px;
-  }
-
-  .obstacle {
-    width: 40px;
-    height: 40px;
-  }
-
-  .cloud {
-    width: 50px;
-    height: 25px;
-  }
-
-  .game-over-img {
-    width: 140px;
-  }
-
-  .reset-button {
-    width: 45px;
-  }
-
-  .scoreboard {
-    font-size: 13px;
-    padding: 12px;
-  }
-}
-
     }
   `}
       </style>
+{/* Game Box Centered */}
+<div style={{ display: "flex", justifyContent: "center" }}>
+  <div className="game-container">
+    <img src={cloud} alt="cloud" className="cloud" />
+    <img src={trackImg} alt="track" className="track" />
 
-      {/* Game Box Centered */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <div className="game-container">
-          <img src={cloud} alt="cloud" className="cloud" />
-          <img src={trackImg} alt="track" className="track" />
+    <div
+      className="bike"
+      ref={bikeRef}
+      style={{
+        transform: isJumping ? "translateY(-120px)" : "translateY(0)",
+        backgroundImage: `url(${getBikeImage()})`, // ✅ FIXED
+      }}
+    />
 
-          <div
-            className="bike"
-            ref={bikeRef}
-            style={{
-              transform: isJumping ? "translateY(-120px)" : "translateY(0)",
-              backgroundImage: `url(${getBikeImage()})`,
-            }}
-          />
+    {!gameOver && (
+      <div
+        className="obstacle"
+        ref={obsRef}
+        style={{
+          left: `${obstacleX}px`, // ✅ FIXED
+          backgroundImage: `url(${
+            obstacleType === "bird"
+              ? birdFrames[birdFrame]
+              : obstacleImage
+          })`,
+          height: obstacleType === "bird" ? "40px" : "60px",
+          bottom: obstacleType === "bird" ? "120px" : "20px",
+        }}
+      />
+    )}
 
-          {!gameOver && (
-            <div
-              className="obstacle"
-              ref={obsRef}
-              style={{
-                left: `${obstacleX}px`,
-                backgroundImage: `url(${
-                  obstacleType === "bird"
-                    ? birdFrames[birdFrame]
-                    : obstacleImage
-                })`,
-                height: obstacleType === "bird" ? "40px" : "60px",
-                bottom: obstacleType === "bird" ? "80px" : "20px",
-              }}
-            />
-          )}
+    {gameOver && (
+      <>
+        <img
+          src={gameOverImg}
+          alt="Game Over"
+          className="game-over-img"
+        />
+        <img
+          src={resetImg}
+          alt="Reset"
+          className="reset-button"
+          onClick={resetGame}
+        />
 
-          {gameOver && (
-            <>
-              <img
-                src={gameOverImg}
-                alt="Game Over"
-                className="game-over-img"
-              />
-              <img
-                src={resetImg}
-                alt="Reset"
-                className="reset-button"
-                onClick={resetGame}
-              />
-
-              <div className="scoreboard">
-                <p>🚴‍♂️ Distance: {distance}m</p>
-                <p>🦘 Jumps: {jumps}</p>
-                <p>🏔️ Max Height: {maxHeight.toFixed(2)}px</p>
-                <p>
-                  ⬇️ Lowest Position:{" "}
-                  {minHeight === Infinity ? 0 : minHeight.toFixed(2)}px
-                </p>
-                <h4>🔥 High Score</h4>
-                <p>📏 Distance: {highScore.distance}m</p>
-                <p>🦘 Jumps: {highScore.jumps}</p>
-                <p>🏔️ Max Height: {highScore.maxHeight.toFixed(2)}px</p>
-              </div>
-            </>
-          )}
+        <div className="scoreboard">
+          <p>🚴‍♂️ Distance: {distance}m</p>
+          <p>🦘 Jumps: {jumps}</p>
+          <p>🏔️ Max Height: {maxHeight.toFixed(2)}px</p>
+          <p>
+            ⬇️ Lowest Position:{" "}
+            {minHeight === Infinity ? 0 : minHeight.toFixed(2)}px
+          </p>
+          <h4>🔥 High Score</h4>
+          <p>📏 Distance: {highScore.distance}m</p>
+          <p>🦘 Jumps: {highScore.jumps}</p>
+          <p>🏔️ Max Height: {highScore.maxHeight.toFixed(2)}px</p>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    )}
+  </div>
+</div>
+}:
 }
