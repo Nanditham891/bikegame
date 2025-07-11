@@ -99,36 +99,6 @@ export default function BikeGame() {
       console.log("🚴‍♂️ BikeGame component unmounted");
     };
   }, []);
-useEffect(() => {
-  const handleKeyUp = (e) => {
-    if (e.code === "Space" && !isJumping && !gameOver) {
-      triggerJump();
-    }
-  };
-
-  const handleTouch = () => {
-    if (!isJumping && !gameOver) {
-      triggerJump();
-    }
-  };
-
-  const triggerJump = () => {
-    setJumps((prev) => prev + 1);
-    setIsJumping(true);
-    playSound("jump");
-    setTimeout(() => setIsJumping(false), 700);
-  };
-
-  window.addEventListener("keyup", handleKeyUp);
-  window.addEventListener("touchstart", handleTouch);
-  window.addEventListener("click", handleTouch); // Optional: support mouse click too
-
-  return () => {
-    window.removeEventListener("keyup", handleKeyUp);
-    window.removeEventListener("touchstart", handleTouch);
-    window.removeEventListener("click", handleTouch);
-  };
-}, [isJumping, gameOver]);
 
   const [distance, setDistance] = useState(0);
   const [jumps, setJumps] = useState(0);
