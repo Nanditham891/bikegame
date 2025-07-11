@@ -117,6 +117,8 @@ export default function BikeGame() {
   const bikeRef = useRef();
   const obsRef = useRef();
   const engineSoundRef = useRef();
+  const jumpTimeoutRef = useRef(null);
+
 
   // Engine sound loop
   useEffect(() => {
