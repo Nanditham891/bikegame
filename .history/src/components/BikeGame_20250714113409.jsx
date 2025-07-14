@@ -91,9 +91,9 @@ export default function BikeGame() {
   const [birdFrame, setBirdFrame] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
-  // Track and obstacle timing
+  // Add these two state hooks for track and obstacle timing
   const [trackOffset, setTrackOffset] = useState(0);
-  const [nextObstacleTime, setNextObstacleTime] = useState(Date.now() + 2000); // 2 seconds
+  const [nextObstacleTime, setNextObstacleTime] = useState(Date.now() + 5000);
 
   const [distance, setDistance] = useState(0);
   const [jumps, setJumps] = useState(0);
@@ -115,14 +115,19 @@ export default function BikeGame() {
 
   // Component initialization logging
   useEffect(() => {
+    console.log("🚴‍♂️ BikeGame component initialized");
+    console.log("🎮 Game ready - Press SPACE to jump!");
+
     // Handle window resize for mobile compatibility
     const handleResize = () => {
       if (gameOver) return;
+      console.log("📱 Screen resized, adjusting game elements");
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
+      console.log("🚴‍♂️ BikeGame component unmounted");
       window.removeEventListener("resize", handleResize);
     };
   }, [gameOver]);
@@ -170,7 +175,7 @@ export default function BikeGame() {
     const obstacleInterval = setInterval(() => {
       setObstacleX((prev) => {
         if (prev < -100) {
-          // Only spawn a new obstacle if 2 seconds have passed since last spawn
+          // Only spawn a new obstacle if 5 seconds have passed since last spawn
           if (Date.now() >= nextObstacleTime) {
             const isBird = Math.random() < 0.3;
             setObstacleType(isBird ? "bird" : "cactus");
@@ -179,7 +184,7 @@ export default function BikeGame() {
                 ? birdFrames[0]
                 : cactusImages[Math.floor(Math.random() * cactusImages.length)]
             );
-            setNextObstacleTime(Date.now() + 2000); // Next in 2 seconds
+            setNextObstacleTime(Date.now() + 5000); // Next in 5 seconds
             return window.innerWidth + 50;
           } else {
             // Wait off-screen until next spawn time
@@ -235,7 +240,14 @@ export default function BikeGame() {
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
-      setDistance((prev) => prev + 1);
+      setDistance((prev) => {
+        const newDistance = prev + 1;
+        // Log every 100m to avoid spam
+        if (newDistance % 100 === 0) {
+          console.log(`🏁 Distance milestone: ${newDistance}m`);
+        }
+        return newDistance;
+      });
       const bike = bikeRef.current?.getBoundingClientRect();
       if (bike) {
         const heightFromBottom = 200 - bike.bottom;
@@ -272,6 +284,14 @@ export default function BikeGame() {
           bikeTop < obsBottom - tolerance;
 
         if (hit) {
+          console.log(`💥 Collision detected with ${obstacleType}! Game Over.`);
+          console.log(
+            `Bike position: ${bikeLeft}, ${bikeTop}, ${bikeRight}, ${bikeBottom}`
+          );
+          console.log(
+            `Obstacle position: ${obsLeft}, ${obsTop}, ${obsRight}, ${obsBottom}`
+          );
+
           setGameOver(true);
           playSound("collision");
 
@@ -307,7 +327,7 @@ export default function BikeGame() {
           });
         }
       }
-    }, 50);
+    }, 50); // Faster check
 
     return () => clearInterval(interval);
   }, [
@@ -330,8 +350,9 @@ export default function BikeGame() {
   };
 
   const resetGame = () => {
+    console.log("🔄 Resetting game...");
     setGameOver(false);
-    setObstacleX(window.innerWidth + 50);
+    setObstacleX(window.innerWidth + 50); // Reset to viewport width
     setIsJumping(false);
     setDistance(0);
     setJumps(0);
@@ -342,7 +363,8 @@ export default function BikeGame() {
     setObstacleType("cactus");
     setObstacleImage(largeCactus1);
     setTrackOffset(0);
-    setNextObstacleTime(Date.now() + 2000);
+    setNextObstacleTime(Date.now() + 5000);
+    console.log("✅ Game reset complete!");
   };
 
   return (
@@ -397,6 +419,14 @@ export default function BikeGame() {
       </div>
       <style>
         {`
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
     .game-container {
       position: relative;
       width: 100%;
@@ -404,13 +434,14 @@ export default function BikeGame() {
       max-width: 1000px;
       min-height: 200px;
       max-height: 400px;
-      touch-action: none;
+      touch-action: none; /* Disable browser touch gestures */
       overflow: hidden;
       margin: 20px auto;
       background: transparent;
       border: 2px solid #ccc;
       border-radius: 8px;
     }
+
     .cloud {
       position: absolute;
       top: 20px;
@@ -420,16 +451,17 @@ export default function BikeGame() {
       z-index: 1;
       object-fit: contain;
     }
+
     .track {
       position: absolute;
       bottom: 0;
       left: 0;
-      width: 100vw;
+      width: 100%;
       height: 20px;
       z-index: 1;
       object-fit: cover;
-      pointer-events: none;
     }
+
     .bike {
       position: absolute;
       bottom: 20px;
@@ -442,6 +474,7 @@ export default function BikeGame() {
       z-index: 3;
       transition: transform 0.2s ease-out;
     }
+
     .obstacle {
       position: absolute;
       width: 60px;
@@ -452,17 +485,20 @@ export default function BikeGame() {
       z-index: 2;
       bottom: 20px;
     }
+
     .game-over-img {
       margin-top: 20px;
       width: 200px;
       max-width: 80%;
     }
+
     .reset-button {
       margin-top: 10px;
       cursor: pointer;
       width: 60px;
       max-width: 20%;
     }
+
     .scoreboard {
       padding: 20px;
       margin-top: 20px;
@@ -472,7 +508,129 @@ export default function BikeGame() {
       width: 90%;
       max-width: 400px;
     }
-    `}
+
+    /* Mobile-first responsive design */
+    @media (max-width: 767px) {
+      .game-container {
+        height: 40vh;
+        min-height: 250px;
+      }
+      
+      .bike {
+        width: 50px !important;
+        height: 50px !important;
+        left: 15% !important;
+      }
+      
+      .obstacle {
+        width: 45px !important;
+        height: 45px !important;
+        bottom: 20px !important;
+      }
+      
+      .cloud {
+        width: 60px !important;
+        height: 30px !important;
+      }
+      
+      .scoreboard {
+        padding: 10px;
+        font-size: 14px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .game-container {
+        height: 50vh;
+      }
+      
+      .bike {
+        width: 70px !important;
+        height: 70px !important;
+      }
+      
+      .obstacle {
+        width: 60px !important;
+        height: 60px !important;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .game-container {
+        height: 60vh;
+      }
+      
+      .bike {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      
+      .obstacle {
+        width: 70px !important;
+        height: 70px !important;
+      }
+    }
+      .game-container {
+        height: 150px;
+      }
+      
+      .bike {
+        width: 40px;
+        height: 40px;
+        left: 5%;
+      }
+      
+      .obstacle {
+        width: 35px;
+        height: 35px;
+      }
+      
+      .scoreboard {
+        padding: 10px;
+        font-size: 12px;
+      }
+      
+      .reset-button {
+        width: 40px;
+      }
+    }
+    
+    @media (min-width: 481px) and (max-width: 768px) {
+      .game-container {
+        height: 180px;
+      }
+
+      .bike {
+        width: 45px;
+        height: 45px;
+      }
+      
+      .obstacle {
+        width: 45px;
+        height: 45px;
+      }
+
+      .cloud {
+        width: 60px;
+        height: 30px;
+      }
+
+      .game-over-img {
+        width: 160px;
+      }
+
+      .reset-button {
+        width: 50px;
+      }
+
+      .scoreboard {
+        font-size: 14px;
+        padding: 15px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+  `}
       </style>
 
       {/* Game Box Centered */}
